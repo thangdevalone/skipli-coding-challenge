@@ -2,17 +2,19 @@ import api from './api';
 
 export interface Employee {
   id: string;
+  employeeId: string;
   email: string;
-  name?: string;
+  name: string;
   phoneNumber?: string;
-  role: 'employee';
+  department?: string;
+  role: string;
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface CreateEmployeeData {
+  name: string;
   email: string;
-  name?: string;
   phoneNumber?: string;
 }
 
@@ -24,28 +26,32 @@ export interface UpdateEmployeeData {
 class EmployeeService {
   async getEmployees(): Promise<Employee[]> {
     try {
-      const response = await api.get('/employees');
+      const response = await api.get('/owner/get-all-employees');
       return response.data.employees || [];
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch employees');
+      throw new Error(error.response?.data?.error || 'Failed to fetch employees');
     }
   }
 
-  async getEmployee(id: string): Promise<Employee> {
+  async getEmployee(employeeId: string): Promise<Employee> {
     try {
-      const response = await api.get(`/employees/${id}`);
+      const response = await api.get(`/owner/get-employee/${employeeId}`);
       return response.data.employee;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch employee');
+      throw new Error(error.response?.data?.error || 'Failed to fetch employee');
     }
   }
 
-  async createEmployee(data: CreateEmployeeData): Promise<Employee> {
+  async createEmployee(data: CreateEmployeeData): Promise<string> {
     try {
-      const response = await api.post('/employees', data);
-      return response.data.employee;
+      const response = await api.post('/owner/create-employee', {
+        name: data.name,
+        email: data.email,
+        department: data.phoneNumber || '',
+      });
+      return response.data.employeeId;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to create employee');
+      throw new Error(error.response?.data?.error || 'Failed to create employee');
     }
   }
 
@@ -58,14 +64,13 @@ class EmployeeService {
     }
   }
 
-  async deleteEmployee(id: string): Promise<void> {
+  async deleteEmployee(employeeId: string): Promise<void> {
     try {
-      await api.delete(`/employees/${id}`);
+      await api.delete(`/owner/delete-employee/${employeeId}`);
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to delete employee');
+      throw new Error(error.response?.data?.error || 'Failed to delete employee');
     }
   }
-
 }
 
 export const employeeService = new EmployeeService(); 

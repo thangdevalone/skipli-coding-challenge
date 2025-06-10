@@ -166,4 +166,18 @@ router.post("/delete-employee", async (req, res) => {
   }
 });
 
+// GET /owner/get-all-employees
+router.get("/get-all-employees", async (req, res) => {
+  try {
+    const employees = await firebaseService.getAllEmployees();
+    res.json({
+      success: true,
+      employees,
+    });
+  } catch (error) {
+    console.error("Error getting all employees:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 module.exports = router;

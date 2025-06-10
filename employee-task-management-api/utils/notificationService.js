@@ -13,7 +13,6 @@ class NotificationService {
       },
     });
 
-    // Initialize Twilio client
     if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
       this.twilioClient = twilio(
         process.env.TWILIO_ACCOUNT_SID,
@@ -41,7 +40,7 @@ class NotificationService {
       };
     } catch (error) {
       console.error("SMS sending error:", error);
-      throw new Error(`Failed to send SMS: ${error}`);
+      throw new Error(`Failed to send SMS: ${error.message}`);
     }
   }
 

@@ -2,7 +2,7 @@ import { Role } from '@/types/app';
 import api from './api';
 
 export interface User {
-  id: string;
+  employeeId: string;
   email?: string;
   phoneNumber?: string;
   role: Role;
