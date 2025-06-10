@@ -9,3 +9,8 @@ export const signinValidation = z.object({
     { message: "Invalid phone number" }
   ),
 });
+
+export const verificationValidation = z.object({
+  phone: z.string().min(1, { message: "Phone is required" }),
+  code: z.string().min(1, { message: "Code is required" }),
+});
