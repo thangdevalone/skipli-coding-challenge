@@ -13,13 +13,22 @@ import {
   OwnerVerificationData,
   ownerVerificationValidation,
 } from "@/components/validations/signin-validation";
+import { authService } from "@/lib/auth";
+import useAuthStore from "@/stores/useAuthStore";
+import { Role } from "@/types/app";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useSearchParams } from "next/navigation";
+import { LoaderCircle } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 export default function OwnerVerificationForm() {
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
   const searchParams = useSearchParams();
   const phone = searchParams.get("phone");
+  const { setUser, setToken } = useAuthStore();
 
   const ownerForm = useForm<OwnerVerificationData>({
     resolver: zodResolver(ownerVerificationValidation),
@@ -28,9 +37,36 @@ export default function OwnerVerificationForm() {
       code: "",
     },
   });
+  const onOwnerSubmit = async (data: OwnerVerificationData) => {
+    try {
+      setIsLoading(true);
+      const response = await authService.login({
+        phoneNumber: data.phone,
+        accessCode: data.code,
+        role: Role.OWNER,
+      });
+      setUser(response.data.user);
+      setToken(response.data.token);
+      router.push("/dashboard");
+    } catch (error: any) {
+      toast.error(error.message || "Invalid access code");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const onOwnerSubmit = (data: OwnerVerificationData) => {
-    console.log("Owner verification:", data);
+  const handleResendCode = async () => {
+    try {
+      setIsLoading(true);
+      await authService.sendVerificationCode(
+        { phone: "+84" + (phone || "") },
+        Role.OWNER
+      );
+    } catch (error: any) {
+      toast.error(error.message || "Failed to resend code");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -61,11 +97,7 @@ export default function OwnerVerificationForm() {
               <FormItem>
                 <FormLabel>Code</FormLabel>
                 <FormControl>
-                  <Input
-                    type="text"
-                    placeholder="Enter your code"
-                    {...field}
-                  />
+                  <Input type="text" placeholder="Enter your code" {...field} />
                 </FormControl>
               </FormItem>
             )}
@@ -73,12 +105,25 @@ export default function OwnerVerificationForm() {
         </div>
         <div className="text-sm text-center text-muted-foreground mt-3">
           Code not received?{" "}
-          <span className="text-blue-500 cursor-pointer">Send again</span>
+          <span
+            className="text-blue-500 cursor-pointer"
+            onClick={handleResendCode}
+          >
+            Send again
+          </span>
         </div>
-        <Button type="submit" className="w-full cursor-pointer mt-5">
-          Submit
+        <Button
+          disabled={isLoading}
+          type="submit"
+          className="w-full cursor-pointer mt-5"
+        >
+          {isLoading ? (
+            <LoaderCircle className="w-4 h-4 animate-spin" />
+          ) : (
+            "Submit"
+          )}
         </Button>
       </form>
     </Form>
   );
-} 
+}

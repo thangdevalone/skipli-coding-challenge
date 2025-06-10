@@ -1,4 +1,5 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -14,26 +15,46 @@ import {
   OwnerSigninData,
   ownerSigninValidation,
 } from "@/components/validations/signin-validation";
+import { authService } from "@/lib/auth";
+import { Role } from "@/types/app";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { LoaderCircle } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 export default function OwnerForm() {
   const router = useRouter();
   const params = useParams();
   const role = params.role as string;
-
+  const [isLoading, setIsLoading] = useState(false);
   const ownerForm = useForm<OwnerSigninData>({
     resolver: zodResolver(ownerSigninValidation),
     defaultValues: { phone: "" },
   });
 
-  const onOwnerSubmit = (data: OwnerSigninData) => {
-    router.push(`/auth/${role}/verification?phone=${data.phone}`);
+  const handleSendCode = async (data: OwnerSigninData) => {
+    try {
+      setIsLoading(true);
+      await authService.sendVerificationCode(
+        { phone: "+84" + data.phone },
+        Role.OWNER
+      );
+      toast.success("Access code sent to your phone number");
+      router.push(
+        `/auth/${role}/verification?phone=${encodeURIComponent(data.phone)}`
+      );
+    } catch (error: any) {
+      toast.error(error.message || "Failed to send access code");
+    } finally {
+      setIsLoading(false);
+    }
   };
+
   return (
     <Form {...ownerForm}>
-      <form onSubmit={ownerForm.handleSubmit(onOwnerSubmit)}>
+      <form onSubmit={ownerForm.handleSubmit(handleSendCode)}>
         <FormField
           control={ownerForm.control}
           name="phone"
@@ -57,8 +78,16 @@ export default function OwnerForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full cursor-pointer mt-4">
-          Next
+        <Button
+          disabled={isLoading}
+          type="submit"
+          className="w-full cursor-pointer mt-4"
+        >
+          {isLoading ? (
+            <LoaderCircle className="w-4 h-4 animate-spin" />
+          ) : (
+            "Next"
+          )}
         </Button>
       </form>
     </Form>

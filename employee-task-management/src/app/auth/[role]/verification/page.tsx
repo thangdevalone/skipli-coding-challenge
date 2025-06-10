@@ -28,9 +28,7 @@ export default function VerificationPage() {
         </Button>
         <div className="text-3xl font-semibold text-center">Verification</div>
         <div className="text-sm text-center text-muted-foreground mt-2">
-          {isOwner
-            ? "Please enter the code sent to your phone"
-            : "Please enter the code sent to your email"}
+          Please enter the code sent to your email
         </div>
         <div className="flex flex-col gap-2 mt-6 px-3">
           {isOwner ? <OwnerVerificationForm /> : <EmployeeVerificationForm />}

@@ -3,7 +3,7 @@ const twilio = require("twilio");
 
 class NotificationService {
   constructor() {
-    this.emailTransporter = nodemailer.createTransporter({
+    this.emailTransporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST || "smtp.gmail.com",
       port: parseInt(process.env.EMAIL_PORT) || 587,
       secure: false,
@@ -41,7 +41,7 @@ class NotificationService {
       };
     } catch (error) {
       console.error("SMS sending error:", error);
-      throw new Error(`Failed to send SMS: ${error.message}`);
+      throw new Error(`Failed to send SMS: ${error}`);
     }
   }
 

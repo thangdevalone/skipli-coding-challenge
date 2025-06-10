@@ -1,149 +1,88 @@
 const express = require("express");
 const router = express.Router();
-const database = require("../models/database");
-const { 
-  generateAccessCode, 
-  isValidEmail, 
-  isValidAccessCode,
-  sendEmailWithAccessCode 
-} = require("../utils/helpers");
-
+const firebaseService = require("../utils/firebase");
+const notificationService = require("../utils/notificationService");
 
 router.post("/login-email", async (req, res) => {
   try {
     const { email } = req.body;
-    
-    // Validation
+
     if (!email) {
-      return res.status(400).json({ 
-        error: "Email is required" 
+      return res.status(400).json({
+        error: "Email is required",
       });
     }
-    
-    if (!isValidEmail(email)) {
-      return res.status(400).json({ 
-        error: "Invalid email format" 
+
+    const existingEmployee = await firebaseService.getEmployeeByEmail(email);
+
+    if (!existingEmployee) {
+      return res.status(404).json({
+        error: "Employee not found with this email",
       });
     }
-    
-    const employee = await database.getEmployeeByEmail(email);
-    if (!employee) {
-      return res.status(404).json({ 
-        error: "Employee not found with this email" 
-      });
-    }
-    
-    const accessCode = generateAccessCode();
-    
-    await database.saveEmployeeAccessCode(email, accessCode);
-    
-    sendEmailWithAccessCode(email, accessCode);
-    
-    res.json({ 
-      accessCode,
-      message: "Access code sent to your email address"
+
+    const accessCode = await firebaseService.getEmployeeAccessCode(email);
+
+    await notificationService.sendEmail(email, accessCode);
+
+    res.json({
+      message: "Access code sent to your email address",
     });
-    
   } catch (error) {
-    console.error("Error sending login email:", error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(400).json({ error: error.message });
   }
 });
-
 
 router.post("/validate-access-code", async (req, res) => {
   try {
     const { accessCode, email } = req.body;
-    
+
     if (!accessCode || !email) {
-      return res.status(400).json({ 
-        error: "Access code and email are required" 
+      return res.status(400).json({
+        error: "Access code and email are required",
       });
     }
-    
-    if (!isValidAccessCode(accessCode)) {
-      return res.status(400).json({ 
-        error: "Invalid access code format (must be 6 digits)" 
+
+    const emailKey = email.toLowerCase();
+    const storedData = await firebaseService.getEmployeeAccessCode(email);
+
+    if (!storedData) {
+      return res.status(400).json({
+        error: "No access code found for this email",
       });
     }
-    
-    if (!isValidEmail(email)) {
-      return res.status(400).json({ 
-        error: "Invalid email format" 
+
+    if (Date.now() > storedData.expiresAt) {
+      await firebaseService.clearEmployeeAccessCode(email);
+      return res.status(400).json({
+        error: "Access code has expired. Please request a new code.",
       });
     }
-    
-    const storedAccessCode = await database.getEmployeeAccessCode(email);
-    
-    if (!storedAccessCode || storedAccessCode === "") {
-      return res.status(400).json({ 
-        error: "No access code found for this email" 
+
+    if (storedData.attempts >= 10) {
+      await firebaseService.clearEmployeeAccessCode(email);
+      return res.status(400).json({
+        error: "Too many failed attempts. Please request a new code.",
       });
     }
-    
-    if (storedAccessCode !== accessCode) {
-      return res.status(400).json({ 
-        error: "Invalid access code" 
+
+    if (storedData.code !== accessCode) {
+      storedData.attempts++;
+      return res.status(400).json({
+        error: "Invalid access code",
       });
     }
-    
-    await database.clearEmployeeAccessCode(email);
-    
-    const employee = await database.getEmployeeByEmail(email);
-    
-    res.json({ 
+
+    await firebaseService.clearEmployeeAccessCode(email);
+
+    res.json({
       success: true,
       message: "Access code validated successfully",
-      employee: {
-        employeeId: employee.employeeId,
-        name: employee.name,
-        email: employee.email,
-        department: employee.department
-      }
     });
-    
   } catch (error) {
     console.error("Error validating access code:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
-router.post("/profile", async (req, res) => {
-  try {
-    const { email } = req.body;
-    
-    if (!email) {
-      return res.status(400).json({ 
-        error: "Email is required" 
-      });
-    }
-    
-    if (!isValidEmail(email)) {
-      return res.status(400).json({ 
-        error: "Invalid email format" 
-      });
-    }
-    
-    const employee = await database.getEmployeeByEmail(email);
-    
-    if (!employee) {
-      return res.status(404).json({ 
-        error: "Employee not found" 
-      });
-    }
-    
-    res.json({
-      employeeId: employee.employeeId,
-      name: employee.name,
-      email: employee.email,
-      department: employee.department,
-      createdAt: employee.createdAt
-    });
-    
-  } catch (error) {
-    console.error("Error getting employee profile:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-module.exports = router; 
+module.exports = router;
