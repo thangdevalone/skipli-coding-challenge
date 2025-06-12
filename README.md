@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/6771a9ba-a001-4a3f-986d-efee9feae432)# Employee Task Management System
+# Employee Task Management System
 
 A full-stack web application for managing employees and tasks with real-time messaging capabilities. Built with Next.js 15, React 19, and Node.js with Firebase integration.
 
