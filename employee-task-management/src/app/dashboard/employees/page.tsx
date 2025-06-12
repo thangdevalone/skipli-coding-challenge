@@ -1,18 +1,27 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { EmployeesDataTable } from "@/components/data-table/employees-data-table";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { employeeService, Employee, CreateEmployeeData } from '@/lib/employeeService';
-import { useToast } from '@/hooks/use-toast';
-import { EmployeesDataTable } from '@/components/data-table/employees-data-table';
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { EmployeeCreationData } from "@/components/validations/employee-creation-validation";
+import { Employee, employeeService } from "@/lib/employeeService";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -21,14 +30,14 @@ export default function EmployeesPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
-  const { toast } = useToast();
 
-  const [newEmployee, setNewEmployee] = useState<CreateEmployeeData>({
-    name: '',
-    email: '',
-    phoneNumber: '',
+  const employeeForm = useForm<EmployeeCreationData>({
+    defaultValues: {
+      name: "",
+      email: "",
+      department: "",
+    },
   });
-
   useEffect(() => {
     fetchEmployees();
   }, []);
@@ -38,43 +47,23 @@ export default function EmployeesPage() {
       const employeesList = await employeeService.getEmployees();
       setEmployees(employeesList);
     } catch (error) {
-      console.error('Failed to fetch employees:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch employees',
-        variant: 'destructive',
-      });
+      console.error("Failed to fetch employees:", error);
+      toast.error("Failed to fetch employees");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleCreateEmployee = async () => {
-    if (!newEmployee.name || !newEmployee.email) {
-      toast({
-        title: 'Error',
-        description: 'Name and email are required',
-        variant: 'destructive',
-      });
-      return;
-    }
-
+  const handleCreateEmployee = async (data: EmployeeCreationData) => {
     setIsCreating(true);
     try {
-      await employeeService.createEmployee(newEmployee);
-      toast({
-        title: 'Success',
-        description: 'Employee created successfully',
-      });
+      await employeeService.createEmployee(data);
+      toast.success("Employee created successfully");
       setIsCreateDialogOpen(false);
-      setNewEmployee({ name: '', email: '', phoneNumber: '' });
+      employeeForm.reset();
       await fetchEmployees();
     } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to create employee',
-        variant: 'destructive',
-      });
+      toast.error(error.message || "Failed to create employee");
     } finally {
       setIsCreating(false);
     }
@@ -82,21 +71,22 @@ export default function EmployeesPage() {
 
   const handleEditEmployee = (employee: Employee) => {
     setEditingEmployee(employee);
-    setNewEmployee({
+    employeeForm.reset({
       name: employee.name,
       email: employee.email,
-      phoneNumber: employee.phoneNumber || '',
+      department: employee.department || "",
     });
+
     setIsEditDialogOpen(true);
   };
 
   const handleUpdateEmployee = async () => {
-    if (!editingEmployee || !newEmployee.name || !newEmployee.email) {
-      toast({
-        title: 'Error',
-        description: 'Name and email are required',
-        variant: 'destructive',
-      });
+    if (
+      !editingEmployee ||
+      !employeeForm.getValues("name") ||
+      !employeeForm.getValues("email")
+    ) {
+      toast.error("Name and email are required");
       return;
     }
 
@@ -104,19 +94,12 @@ export default function EmployeesPage() {
     try {
       // Note: Implement updateEmployee method in service if not exists
       // await employeeService.updateEmployee(editingEmployee.employeeId, newEmployee);
-      toast({
-        title: 'Info',
-        description: 'Update functionality not implemented yet',
-      });
+      toast.info("Update functionality not implemented yet");
       setIsEditDialogOpen(false);
       setEditingEmployee(null);
-      setNewEmployee({ name: '', email: '', phoneNumber: '' });
+      employeeForm.reset();
     } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to update employee',
-        variant: 'destructive',
-      });
+      toast.error(error.message || "Failed to update employee");
     } finally {
       setIsCreating(false);
     }
@@ -125,39 +108,32 @@ export default function EmployeesPage() {
   const handleDeleteEmployee = async (employeeId: string) => {
     try {
       await employeeService.deleteEmployee(employeeId);
-      toast({
-        title: 'Success',
-        description: 'Employee deleted successfully',
-      });
+      toast.success("Employee deleted successfully");
       await fetchEmployees();
     } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to delete employee',
-        variant: 'destructive',
-      });
+      toast.error(error.message || "Failed to delete employee");
     }
   };
 
   const handleCreateDialog = () => {
-    setNewEmployee({ name: '', email: '', phoneNumber: '' });
+    employeeForm.reset();
     setIsCreateDialogOpen(true);
   };
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Employee Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Employee Management
+          </h1>
           <p className="text-gray-600 mt-2">
             Manage your team members and their access
           </p>
         </div>
       </div>
 
-      {/* Data Table */}
-      <EmployeesDataTable 
+      <EmployeesDataTable
         data={employees}
         onEdit={handleEditEmployee}
         onDelete={handleDeleteEmployee}
@@ -165,111 +141,143 @@ export default function EmployeesPage() {
         isLoading={isLoading}
       />
 
-      {/* Create Employee Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add New Employee</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                value={newEmployee.name}
-                onChange={(e) => setNewEmployee({ ...newEmployee, name: e.target.value })}
-                placeholder="Enter employee name"
-                required
+          <Form {...employeeForm}>
+            <form
+              onSubmit={employeeForm.handleSubmit(handleCreateEmployee)}
+              className="space-y-4"
+            >
+              <FormField
+                control={employeeForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Enter employee name" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={newEmployee.email}
-                onChange={(e) => setNewEmployee({ ...newEmployee, email: e.target.value })}
-                placeholder="Enter employee email"
-                required
+              <FormField
+                control={employeeForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="example@gmail.com" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div>
-              <Label htmlFor="phoneNumber">Phone Number (Optional)</Label>
-              <Input
-                id="phoneNumber"
-                value={newEmployee.phoneNumber}
-                onChange={(e) => setNewEmployee({ ...newEmployee, phoneNumber: e.target.value })}
-                placeholder="Enter phone number"
+              <FormField
+                control={employeeForm.control}
+                name="department"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Department</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Enter employee department"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="flex justify-end space-x-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsCreateDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleCreateEmployee} disabled={isCreating}>
-                {isCreating ? 'Creating...' : 'Create Employee'}
-              </Button>
-            </div>
-          </div>
+              <div className="flex justify-end space-x-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsCreateDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isCreating}>
+                  {isCreating ? "Creating..." : "Create Employee"}
+                </Button>
+              </div>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
 
-      {/* Edit Employee Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Employee</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="edit-name">Name</Label>
-              <Input
-                id="edit-name"
-                value={newEmployee.name}
-                onChange={(e) => setNewEmployee({ ...newEmployee, name: e.target.value })}
-                placeholder="Enter employee name"
-                required
+          <Form {...employeeForm}>
+            <form
+              onSubmit={employeeForm.handleSubmit(handleUpdateEmployee)}
+              className="space-y-4"
+            >
+              <FormField
+                control={employeeForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div>
-              <Label htmlFor="edit-email">Email</Label>
-              <Input
-                id="edit-email"
-                type="email"
-                value={newEmployee.email}
-                onChange={(e) => setNewEmployee({ ...newEmployee, email: e.target.value })}
-                placeholder="Enter employee email"
-                required
+              <FormField
+                control={employeeForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div>
-              <Label htmlFor="edit-phoneNumber">Phone Number (Optional)</Label>
-              <Input
-                id="edit-phoneNumber"
-                value={newEmployee.phoneNumber}
-                onChange={(e) => setNewEmployee({ ...newEmployee, phoneNumber: e.target.value })}
-                placeholder="Enter phone number"
+              <FormField
+                control={employeeForm.control}
+                name="department"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Department</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Enter employee department"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="flex justify-end space-x-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsEditDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleUpdateEmployee} disabled={isCreating}>
-                {isCreating ? 'Updating...' : 'Update Employee'}
-              </Button>
-            </div>
-          </div>
+              <div className="flex justify-end space-x-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsEditDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isCreating}>
+                  {isCreating ? "Updating..." : "Update Employee"}
+                </Button>
+              </div>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>
   );
-} 
+}

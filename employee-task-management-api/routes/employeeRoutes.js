@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const firebaseService = require("../utils/firebase");
 const notificationService = require("../utils/notificationService");
+const { generateToken } = require("../utils/jwtAuth");
 
 router.post("/login-email", async (req, res) => {
   try {
@@ -21,15 +22,48 @@ router.post("/login-email", async (req, res) => {
       });
     }
 
-    const accessCode = await firebaseService.getEmployeeAccessCode(email);
+    if (!existingEmployee.confirmed) {
+      return res.status(400).json({
+        error: "Please confirm your account first. Check your email for confirmation link.",
+      });
+    }
 
-    await notificationService.sendEmail(email, accessCode);
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    await firebaseService.saveEmployeeAccessCode(email, otp);
+
+    await notificationService.sendEmployeeOTP(email, otp);
 
     res.json({
-      message: "Access code sent to your email address",
+      message: "OTP sent to your email address",
     });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error("Error in login-email:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/confirm-employee", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const confirmedEmployee = await firebaseService.confirmEmployee(email);
+
+    if (!confirmedEmployee) {
+      return res.status(404).json({
+        error: "Employee not found with this email",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Employee confirmed successfully",
+    });
+
+
+  } catch (error) {
+    console.error("Error in confirm-account:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -43,7 +77,6 @@ router.post("/validate-access-code", async (req, res) => {
       });
     }
 
-    const emailKey = email.toLowerCase();
     const storedData = await firebaseService.getEmployeeAccessCode(email);
 
     if (!storedData) {
@@ -59,23 +92,23 @@ router.post("/validate-access-code", async (req, res) => {
       });
     }
 
-    if (storedData.attempts >= 10) {
-      await firebaseService.clearEmployeeAccessCode(email);
-      return res.status(400).json({
-        error: "Too many failed attempts. Please request a new code.",
-      });
-    }
-
-    if (storedData.code !== accessCode) {
-      storedData.attempts++;
-      return res.status(400).json({
-        error: "Invalid access code",
-      });
-    }
-
     await firebaseService.clearEmployeeAccessCode(email);
+    let employee;
+    const existingEmployee = await firebaseService.getEmployeeByEmail(email);
+
+    if (!existingEmployee) {
+      employee = await firebaseService.createEmployee(email);
+    } else {
+      employee = existingEmployee;
+    }
+
+    const token = generateToken(employee);
 
     res.json({
+      data: {
+        token,
+        user: employee,
+      },
       success: true,
       message: "Access code validated successfully",
     });

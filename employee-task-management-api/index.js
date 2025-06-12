@@ -16,7 +16,6 @@ const io = socketIo(server, {
 const PORT = process.env.PORT || 3000;
 const ownerRoutes = require("./routes/ownerRoutes");
 const employeeRoutes = require("./routes/employeeRoutes");
-const taskRoutes = require("./routes/taskRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 
 app.use(express.json());
@@ -46,15 +45,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("task_updated", (data) => {
-    const { assignedTo, task } = data;
-    const recipientSocketId = connectedUsers.get(assignedTo);
-
-    if (recipientSocketId) {
-      io.to(recipientSocketId).emit("task_notification", task);
-    }
-  });
-
   socket.on("disconnect", () => {
     // Remove user from connected users
     for (const [userId, socketId] of connectedUsers.entries()) {
@@ -69,7 +59,6 @@ io.on("connection", (socket) => {
 
 app.use("/owner", ownerRoutes);
 app.use("/employee", employeeRoutes);
-app.use("/tasks", taskRoutes);
 app.use("/messages", messageRoutes);
 
 app.get("/", (req, res) => {

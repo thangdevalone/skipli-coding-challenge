@@ -3,43 +3,50 @@ const router = express.Router();
 const firebaseService = require("../utils/firebase");
 const { authenticateToken } = require("../utils/jwtAuth");
 
-// Get all conversations for current user
 router.get("/conversations", authenticateToken, async (req, res) => {
   try {
     const conversations = await firebaseService.getUserConversations(req.user.employeeId);
     
-    // Get participant details for each conversation
+    // Handle empty conversations gracefully
+    if (!conversations || conversations.length === 0) {
+      return res.json({ conversations: [] });
+    }
+    
     const conversationsWithDetails = await Promise.all(
       conversations.map(async (conversation) => {
-        const otherParticipantId = conversation.participants.find(
-          (id) => id !== req.user.employeeId
-        );
-        
-        let otherParticipant = null;
-        if (otherParticipantId) {
-          otherParticipant = await firebaseService.getEmployee(otherParticipantId);
+        try {
+          const otherParticipantId = conversation.participants.find(
+            (id) => id !== req.user.employeeId
+          );
+          
+          let otherParticipant = null;
+          if (otherParticipantId) {
+            otherParticipant = await firebaseService.getEmployee(otherParticipantId);
+          }
+          
+          return {
+            ...conversation,
+            otherParticipant,
+          };
+        } catch (err) {
+          console.error("Error processing conversation:", err);
+          return conversation; // Return conversation without details if error
         }
-        
-        return {
-          ...conversation,
-          otherParticipant,
-        };
       })
     );
 
     res.json({ conversations: conversationsWithDetails });
   } catch (error) {
     console.error("Error getting conversations:", error);
-    res.status(500).json({ error: "Internal server error" });
+    // Return empty array instead of error to prevent frontend crash
+    res.json({ conversations: [] });
   }
 });
 
-// Get messages for a specific conversation
 router.get("/conversations/:conversationId", authenticateToken, async (req, res) => {
   try {
     const { conversationId } = req.params;
     
-    // Verify user is participant in this conversation
     const [participant1, participant2] = conversationId.split('_');
     if (participant1 !== req.user.employeeId && participant2 !== req.user.employeeId) {
       return res.status(403).json({
@@ -48,14 +55,14 @@ router.get("/conversations/:conversationId", authenticateToken, async (req, res)
     }
 
     const messages = await firebaseService.getMessagesByConversation(conversationId);
-    res.json({ messages });
+    res.json({ messages: messages || [] });
   } catch (error) {
     console.error("Error getting messages:", error);
-    res.status(500).json({ error: "Internal server error" });
+    // Return empty messages array instead of error
+    res.json({ messages: [] });
   }
 });
 
-// Send a message
 router.post("/send", authenticateToken, async (req, res) => {
   try {
     const { recipientId, content } = req.body;
@@ -66,7 +73,6 @@ router.post("/send", authenticateToken, async (req, res) => {
       });
     }
 
-    // Verify recipient exists
     const recipient = await firebaseService.getEmployee(recipientId);
     if (!recipient) {
       return res.status(404).json({
@@ -74,24 +80,21 @@ router.post("/send", authenticateToken, async (req, res) => {
       });
     }
 
-    // Get or create conversation
     const conversation = await firebaseService.getOrCreateConversation(
       req.user.employeeId,
       recipientId
     );
 
-    // Create message
     const messageData = {
       conversationId: conversation.id,
       senderId: req.user.employeeId,
       recipientId,
       content,
-      readBy: [req.user.employeeId], // Sender has read it by default
+      readBy: [req.user.employeeId], 
     };
 
     const message = await firebaseService.createMessage(messageData);
 
-    // Update conversation with last message
     await firebaseService.updateConversationLastMessage(conversation.id, {
       content: content,
       senderId: req.user.employeeId,
@@ -108,7 +111,6 @@ router.post("/send", authenticateToken, async (req, res) => {
   }
 });
 
-// Start a new conversation
 router.post("/conversations/start", authenticateToken, async (req, res) => {
   try {
     const { participantId } = req.body;
@@ -119,7 +121,6 @@ router.post("/conversations/start", authenticateToken, async (req, res) => {
       });
     }
 
-    // Verify participant exists
     const participant = await firebaseService.getEmployee(participantId);
     if (!participant) {
       return res.status(404).json({
@@ -142,12 +143,10 @@ router.post("/conversations/start", authenticateToken, async (req, res) => {
   }
 });
 
-// Get list of employees to start conversation with
 router.get("/contacts", authenticateToken, async (req, res) => {
   try {
     const allEmployees = await firebaseService.getAllEmployees();
     
-    // Filter out current user
     const contacts = allEmployees.filter(
       (employee) => employee.employeeId !== req.user.employeeId
     );

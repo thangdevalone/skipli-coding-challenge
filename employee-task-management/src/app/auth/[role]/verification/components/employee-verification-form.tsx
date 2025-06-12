@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import {
+  Form,
   FormControl,
   FormField,
   FormItem,
@@ -13,12 +14,13 @@ import {
   employeeVerificationValidation,
 } from "@/components/validations/signin-validation";
 import { authService } from "@/lib/auth";
+import useAuthStore from "@/stores/useAuthStore";
 import { Role } from "@/types/app";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoaderCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { Form, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 export default function EmployeeVerificationForm() {
@@ -33,15 +35,18 @@ export default function EmployeeVerificationForm() {
       code: "",
     },
   });
+  const { setUser, setToken } = useAuthStore();
 
   const handleVerifyCode = async (data: EmployeeVerificationData) => {
     try {
       setIsLoading(true);
-      await authService.login({
+      const response = await authService.login({
         email: data.email,
         accessCode: data.code,
         role: Role.EMPLOYEE,
       });
+      setUser(response.data.user);
+      setToken(response.data.token);
 
       router.push("/dashboard");
     } catch (error: any) {

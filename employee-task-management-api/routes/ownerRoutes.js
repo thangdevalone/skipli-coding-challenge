@@ -60,10 +60,17 @@ router.post("/validate-access-code", async (req, res) => {
     }
 
     await firebaseService.clearOwnerAccessCode(phoneNumber);
-    const owner = await firebaseService.createOwner(
-      "Owner - " + phoneNumber,
-      phoneNumber
-    );
+    let owner;
+    const existingOwner = await firebaseService.getOwner(phoneNumber);
+
+    if (!existingOwner) {
+      owner = await firebaseService.createOwner(
+        "Owner - " + phoneNumber,
+        phoneNumber
+      );
+    } else {
+      owner = existingOwner;
+    }
 
     const token = generateToken(owner);
 
@@ -124,7 +131,11 @@ router.post("/create-employee", async (req, res) => {
       });
     }
 
-    const employeeId = await firebaseService.createEmployee(name, email);
+    const confirmationLink = `${process.env.FE_LINK}/confirm-employee?email=${email}`;
+
+    await notificationService.sendEmployeeCreationEmail(email, name, confirmationLink);
+    const employeeId = await firebaseService.createEmployee(name, email, department);
+
 
     res.json({
       success: true,
@@ -137,9 +148,9 @@ router.post("/create-employee", async (req, res) => {
   }
 });
 
-router.post("/delete-employee", async (req, res) => {
+router.delete("/delete-employee/:employeeId", async (req, res) => {
   try {
-    const { employeeId } = req.body;
+    const { employeeId } = req.params;
 
     if (!employeeId) {
       return res.status(400).json({
@@ -166,7 +177,6 @@ router.post("/delete-employee", async (req, res) => {
   }
 });
 
-// GET /owner/get-all-employees
 router.get("/get-all-employees", async (req, res) => {
   try {
     const employees = await firebaseService.getAllEmployees();

@@ -44,12 +44,8 @@ class EmployeeService {
 
   async createEmployee(data: CreateEmployeeData): Promise<string> {
     try {
-      const response = await api.post('/owner/create-employee', {
-        name: data.name,
-        email: data.email,
-        department: data.phoneNumber || '',
-      });
-      return response.data.employeeId;
+      const response = await api.post('/owner/create-employee', data);
+      return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Failed to create employee');
     }
@@ -69,6 +65,14 @@ class EmployeeService {
       await api.delete(`/owner/delete-employee/${employeeId}`);
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Failed to delete employee');
+    }
+  }
+
+  async confirmEmployee(email: string): Promise<void> {
+    try {
+      await api.post('/employee/confirm-employee', { email });
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Failed to confirm employee');
     }
   }
 }

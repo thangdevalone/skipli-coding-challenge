@@ -12,7 +12,13 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table";
-import { MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  LoaderCircle,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import * as React from "react";
 
 import {
@@ -239,7 +245,7 @@ export function EmployeesDataTable({
                   className="h-24 text-center"
                 >
                   <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                    <LoaderCircle className="h-4 w-4 animate-spin" />
                     <span className="ml-2">Loading employees...</span>
                   </div>
                 </TableCell>
