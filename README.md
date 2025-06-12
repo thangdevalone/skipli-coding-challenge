@@ -1,4 +1,4 @@
-# Employee Task Management System
+![image](https://github.com/user-attachments/assets/6771a9ba-a001-4a3f-986d-efee9feae432)# Employee Task Management System
 
 A full-stack web application for managing employees and tasks with real-time messaging capabilities. Built with Next.js 15, React 19, and Node.js with Firebase integration.
 
@@ -18,41 +18,6 @@ A full-stack web application for managing employees and tasks with real-time mes
 - **Firebase Admin SDK** for authentication
 - **Socket.io** for real-time messaging
 - **JWT** for authentication tokens
-
-## 📁 Project Structure
-
-```
-skipli-coding-challenge/
-├── employee-task-management/          # Frontend (Next.js)
-│   ├── src/
-│   │   ├── app/                      # Next.js App Router pages
-│   │   │   ├── auth/                 # Authentication pages
-│   │   │   ├── admin/                # Admin panel
-│   │   │   ├── dashboard/            # Main dashboard
-│   │   │   │   ├── employees/        # Employee management
-│   │   │   │   ├── tasks/            # Task management
-│   │   │   │   └── messages/         # Messaging system
-│   │   │   └── setup/                # Initial setup
-│   │   ├── components/               # Reusable UI components
-│   │   │   ├── ui/                   # Shadcn UI components
-│   │   │   ├── data-table/           # Data table components
-│   │   │   ├── manager/              # Manager-specific components
-│   │   │   └── validations/          # Form validation schemas
-│   │   ├── lib/                      # Utility libraries
-│   │   ├── stores/                   # Zustand state stores
-│   │   └── types/                    # TypeScript type definitions
-│   ├── public/                       # Static assets
-│   └── package.json
-│
-└── employee-task-management-api/      # Backend (Node.js)
-    ├── routes/                       # API route handlers
-    │   ├── ownerRoutes.js           # Owner-related endpoints
-    │   ├── employeeRoutes.js        # Employee-related endpoints
-    │   └── messageRoutes.js         # Messaging endpoints
-    ├── config/                       # Configuration files
-    ├── utils/                        # Utility functions
-    └── index.js                      # Main server file
-```
 
 ## ⚡ Installation & Setup
 
@@ -146,45 +111,11 @@ The application will be available at:
 - Department-based organization
 - Access code generation for new employees
 
-### 📋 Task Management
-- Create and assign tasks to employees
-- Task status tracking (pending, in-progress, completed)
-- Real-time task updates
-- Task filtering and search capabilities
-
 ### 💬 Real-time Messaging
 - Direct messaging between users
 - Real-time message delivery using Socket.io
 - Message read receipts
 - Conversation history
-
-### 📊 Dashboard Features
-- Role-specific dashboards
-- Employee overview and statistics
-- Task progress tracking
-- Recent activities feed
-
-### 🎨 Modern UI/UX
-- Responsive design for all devices
-- Dark/Light theme support
-- Modern component library (Shadcn UI)
-- Smooth animations and transitions
-
-## 🛠️ Available Scripts
-
-### Frontend Scripts
-```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run start        # Start production server
-npm run lint         # Run ESLint
-```
-
-### Backend Scripts
-```bash
-npm start            # Start production server
-npm run dev          # Start development server with nodemon
-```
 
 ## 🔧 Configuration
 
@@ -197,32 +128,9 @@ npm run dev          # Start development server with nodemon
 ### Database Collections
 The application uses the following Firestore collections:
 - `employees` - Employee data
-- `tasks` - Task information
 - `messages` - Chat messages
 - `conversations` - Message conversations
 - `accessCodes` - Employee access codes
-
-## 🚀 Deployment
-
-### Frontend Deployment (Vercel)
-```bash
-npm run build
-# Deploy to Vercel or your preferred platform
-```
-
-### Backend Deployment
-```bash
-# Set production environment variables
-# Deploy to your preferred cloud provider (Railway, Heroku, etc.)
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
 
 ## 📝 License
 
@@ -236,22 +144,22 @@ For support and questions, please contact the development team.
 
 ## 📸 Demo Screenshots
 
-*Add your demo images below:*
 
 ### Login Page
-<!-- Paste your login page screenshot here -->
+![image](https://github.com/user-attachments/assets/0e312d84-cccf-4c34-8cc5-439df44e5168)
+![image](https://github.com/user-attachments/assets/a01b918f-8bee-4f56-892d-3d36a2b1e8a1)
+![image](https://github.com/user-attachments/assets/4da4185a-1d7a-4489-bb2f-0c7e75baf757)
+![image](https://github.com/user-attachments/assets/0f385411-c2e2-451e-acc0-3db6e74791e4)
+![image](https://github.com/user-attachments/assets/ee6f4c9d-a735-453c-b5b3-8e14ba6b4ba8)
 
-### Dashboard Overview
-<!-- Paste your dashboard screenshot here -->
+
 
 ### Employee Management
-<!-- Paste your employee management screenshot here -->
+![image](https://github.com/user-attachments/assets/099ae7a2-0f86-4739-9715-bc18e09beaa3)
 
-### Task Management
-<!-- Paste your task management screenshot here -->
 
 ### Real-time Messaging
-<!-- Paste your messaging interface screenshot here -->
+![image](https://github.com/user-attachments/assets/86929f5d-64a4-4637-ad16-16e546a8ad0a)
 
 ---
 
