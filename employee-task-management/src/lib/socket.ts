@@ -1,7 +1,5 @@
 import { io, Socket } from 'socket.io-client';
 import { Message } from './messageService';
-import { Task } from './taskService';
-
 class SocketService {
   private socket: Socket | null = null;
   private userId: string | null = null;
@@ -49,25 +47,6 @@ class SocketService {
   offReceiveMessage() {
     if (this.socket) {
       this.socket.off('receive_message');
-    }
-  }
-
-  // Task handling
-  notifyTaskUpdate(assignedTo: string, task: Task) {
-    if (this.socket && this.socket.connected) {
-      this.socket.emit('task_updated', { assignedTo, task });
-    }
-  }
-
-  onTaskNotification(callback: (task: Task) => void) {
-    if (this.socket) {
-      this.socket.on('task_notification', callback);
-    }
-  }
-
-  offTaskNotification() {
-    if (this.socket) {
-      this.socket.off('task_notification');
     }
   }
 
