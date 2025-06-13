@@ -11,4 +11,4 @@ function EmployeeLayout({
   );
 }
 
-export default RootLayout;
+export default EmployeeLayout;
