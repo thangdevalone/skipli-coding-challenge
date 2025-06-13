@@ -85,7 +85,6 @@ export default function CreateEmployeePage() {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
             <Button asChild variant="outline" size="sm">
@@ -108,7 +107,6 @@ export default function CreateEmployeePage() {
           </div>
         </div>
 
-        {/* Form */}
         <EmployeeCreationForm onSuccess={handleSuccess} />
       </div>
     </div>
