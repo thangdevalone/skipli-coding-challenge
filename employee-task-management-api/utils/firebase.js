@@ -278,27 +278,6 @@ class Firebase {
     }
   }
 
-  // Task Management Methods
-  async createTask(taskData) {
-    try {
-      const taskId = Math.random().toString(36).substring(2, 15);
-      const task = {
-        id: taskId,
-        ...taskData,
-        status: "pending",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      await db.collection(this.COLLECTIONS.TASKS).doc(taskId).set(task);
-      return task;
-    } catch (error) {
-      console.error("Error creating task:", error);
-      throw error;
-    }
-  }
-
-
   async createMessage(messageData) {
     try {
       const messageId = Math.random().toString(36).substring(2, 15);
@@ -321,7 +300,6 @@ class Firebase {
 
   async getMessagesByConversation(conversationId) {
     try {
-      // Sử dụng query đơn giản để tránh vấn đề index
       const snapshot = await db
         .collection(this.COLLECTIONS.MESSAGES)
         .where("conversationId", "==", conversationId)
@@ -332,17 +310,15 @@ class Firebase {
         messages.push(doc.data());
       });
 
-      // Sort trong memory theo createdAt
       messages.sort((a, b) => {
         const timeA = new Date(a.createdAt).getTime();
         const timeB = new Date(b.createdAt).getTime();
-        return timeA - timeB; // Sort asc
+        return timeA - timeB; 
       });
 
       return messages;
     } catch (error) {
       console.error("Error getting messages:", error);
-      // Return empty array thay vì throw error
       return [];
     }
   }
@@ -362,7 +338,7 @@ class Firebase {
           participants: [participant1, participant2],
           createdAt: new Date().toISOString(),
           lastMessage: null,
-          lastMessageAt: new Date().toISOString(), // Set initial time instead of null
+          lastMessageAt: new Date().toISOString(), 
         };
 
         await db
@@ -381,7 +357,6 @@ class Firebase {
 
   async getUserConversations(userId) {
     try {
-      // Thử query đơn giản với array-contains trước
       let snapshot;
       try {
         snapshot = await db
@@ -390,7 +365,6 @@ class Firebase {
           .get();
       } catch (indexError) {
         console.log("Index error, fallback to simple query:", indexError.message);
-        // Fallback: get all conversations và filter trong memory
         snapshot = await db
           .collection(this.COLLECTIONS.CONVERSATIONS)
           .get();
@@ -399,23 +373,20 @@ class Firebase {
       const conversations = [];
       snapshot.forEach((doc) => {
         const data = doc.data();
-        // Filter conversations that include this user if we did fallback query
         if (data.participants && data.participants.includes(userId)) {
           conversations.push(data);
         }
       });
 
-      // Sort trong memory theo lastMessageAt
       conversations.sort((a, b) => {
         const timeA = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
         const timeB = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
-        return timeB - timeA; // Sort desc
+        return timeB - timeA; 
       });
 
       return conversations;
     } catch (error) {
       console.error("Error getting user conversations:", error);
-      // Return empty array nếu có lỗi để tránh crash app
       return [];
     }
   }
